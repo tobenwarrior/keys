@@ -18,7 +18,8 @@ final class SoundPlayer: @unchecked Sendable {
     private let lock = NSLock()
     private var inflight: [ObjectIdentifier: Int] = [:]
     private var clips: [ClipKey: AVAudioPCMBuffer] = [:]
-    private(set) var running = false
+    private var configurationObserver: NSObjectProtocol?
+    var running: Bool { engine.isRunning }
 
     init(voices: Int = 12) {
         format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 2)!
@@ -37,9 +38,38 @@ final class SoundPlayer: @unchecked Sendable {
         do {
             try engine.start()
             for node in nodes { node.play() }
-            running = engine.isRunning
         } catch {
-            running = false
+            // A later configuration change can retry starting the engine.
+        }
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: engine,
+            queue: nil
+        ) { [weak self] _ in
+            // The notification arrives on an audio engine thread.
+            DispatchQueue.main.async { [weak self] in self?.restartAfterConfigurationChange() }
+        }
+    }
+
+    deinit {
+        if let configurationObserver {
+            NotificationCenter.default.removeObserver(configurationObserver)
+        }
+    }
+
+    private func restartAfterConfigurationChange(attempt: Int = 0) {
+        do {
+            if !engine.isRunning {
+                engine.prepare()
+                try engine.start()
+            }
+            for node in nodes where !node.isPlaying { node.play() }
+        } catch {
+            // Devices may briefly be unavailable while macOS switches outputs.
+            guard attempt < 3 else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.restartAfterConfigurationChange(attempt: attempt + 1)
+            }
         }
     }
 
