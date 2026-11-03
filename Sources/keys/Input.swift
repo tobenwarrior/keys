@@ -3,9 +3,10 @@ import AppKit
 import ApplicationServices
 import CoreGraphics
 import Foundation
+import KeysCore
 
-struct HardwareEvent {
-    enum Kind {
+struct HardwareEvent: Sendable {
+    enum Kind: Sendable {
         case key(Int)
         case mouse(String)
     }
@@ -17,8 +18,8 @@ struct HardwareEvent {
 
 /// Hears key and mouse presses. The code is used only to pick a sound.
 /// It is not written to disk or the console.
-final class InputMonitor {
-    var onEvent: ((HardwareEvent) -> Void)?
+final class InputMonitor: @unchecked Sendable {
+    var onEvent: (@Sendable (HardwareEvent) -> Void)?
     private var port: CFMachPort?
     private var source: CFRunLoopSource?
     private var loop: CFRunLoop?
@@ -81,7 +82,8 @@ final class InputMonitor {
     }
 
     func requestAccessibility() {
-        let options = [kAXTrustedCheckOptionPrompt as String: true] as CFDictionary
+        let prompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        let options = [prompt: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
         openPrivacy("Accessibility")
     }

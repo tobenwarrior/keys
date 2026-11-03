@@ -11,7 +11,7 @@ struct ClipKey: Hashable {
     var rateMillis: Int
 }
 
-final class SoundPlayer {
+final class SoundPlayer: @unchecked Sendable {
     private let engine = AVAudioEngine()
     private let nodes: [AVAudioPlayerNode]
     private let format: AVAudioFormat

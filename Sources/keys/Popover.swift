@@ -153,7 +153,8 @@ struct PopoverView: View {
             .padding(.vertical, 4)
             .overlay(
                 RoundedRectangle(cornerRadius: 2)
-                    .stroke(Theme.line, lineWidth: 1)
+                    .stroke(lineWidth: 1)
+                    .foregroundStyle(Theme.line)
             )
     }
 

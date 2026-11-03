@@ -14,6 +14,8 @@ keys is a small macOS menu bar app. It plays a mechanical keyboard sound when yo
 
 ## Build on macOS
 
+keys needs macOS 13 or later.
+
 Install the Xcode command line tools if `swift` is not already available:
 
 ```

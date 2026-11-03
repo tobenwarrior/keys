@@ -3,6 +3,9 @@ import PackageDescription
 
 let package = Package(
     name: "keys",
+    platforms: [
+        .macOS(.v13)
+    ],
     products: [
         .executable(name: "keys", targets: ["keys"])
     ],

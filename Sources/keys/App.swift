@@ -12,7 +12,7 @@ final class AppModel: ObservableObject {
     @Published var problem: String?
     @Published var inputOn = false
     @Published var accessOn = false
-    var onSettingsChange: (() -> Void)?
+    var onSettingsChange: (@MainActor () -> Void)?
 
     let session = Session()
     let input = InputMonitor()
@@ -31,8 +31,9 @@ final class AppModel: ObservableObject {
     func start() {
         session.updateSettings(settings)
         reload()
-        input.onEvent = { [weak self] event in
-            self?.session.handle(event)
+        let session = session
+        input.onEvent = { event in
+            session.handle(event)
         }
         input.start()
         refreshPermissions()
@@ -155,16 +156,32 @@ final class AppModel: ObservableObject {
     private static let defaultsKey = "settings"
 }
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var status: NSStatusItem!
-    private var popover: NSPopover!
-    private let model = AppModel()
+    private var status: NSStatusItem?
+    private var popover: NSPopover?
+    private var model: AppModel?
     private var timer: Timer?
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    nonisolated func applicationDidFinishLaunching(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            self.launch()
+        }
+    }
+
+    nonisolated func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            self.model?.stopInput()
+        }
+    }
+
+    private func launch() {
+        let model = AppModel()
+        self.model = model
         model.start()
-        status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        if let button = status.button {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        status = item
+        if let button = item.button {
             button.image = menuImage()
             button.image?.isTemplate = true
             button.action = #selector(togglePopover)
@@ -172,7 +189,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.toolTip = "keys"
         }
         let host = NSHostingController(rootView: PopoverView(model: model))
-        popover = NSPopover()
+        let popover = NSPopover()
         popover.contentViewController = host
         popover.contentSize = NSSize(width: 280, height: 460)
         popover.behavior = .transient
@@ -183,41 +200,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             blue: 28.0 / 255,
             alpha: 1
         ).cgColor
+        self.popover = popover
         model.onSettingsChange = { [weak self] in
             self?.updateIcon()
         }
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            let shown = self.popover.isShown
-            Task { @MainActor in
-                if shown { self.model.refreshPermissions() }
-                self.status.button?.appearsDisabled = self.model.settings.muted
-            }
-        }
+        timer = Timer.scheduledTimer(
+            timeInterval: 1,
+            target: self,
+            selector: #selector(tick),
+            userInfo: nil,
+            repeats: true
+        )
         updateIcon()
     }
 
-    func applicationWillTerminate(_ notification: Notification) {
+    @objc nonisolated private func togglePopover() {
         MainActor.assumeIsolated {
-            model.stopInput()
+            self.toggle()
         }
     }
 
-    @objc private func togglePopover() {
-        guard let button = status.button else { return }
+    @objc nonisolated private func tick() {
+        MainActor.assumeIsolated {
+            if self.popover?.isShown == true {
+                self.model?.refreshPermissions()
+            }
+            self.updateIcon()
+        }
+    }
+
+    private func toggle() {
+        guard let button = status?.button, let popover else { return }
         if popover.isShown {
             popover.performClose(nil)
         } else {
-            Task { @MainActor in
-                self.model.refreshPermissions()
-            }
+            model?.refreshPermissions()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
         updateIcon()
     }
 
     private func updateIcon() {
-        status.button?.appearsDisabled = model.settings.muted
+        status?.button?.appearsDisabled = model?.settings.muted ?? false
     }
 
     private func menuImage() -> NSImage {

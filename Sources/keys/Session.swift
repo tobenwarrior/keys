@@ -4,7 +4,7 @@ import KeysCore
 
 /// Playback state shared by the menu and the input thread.
 /// Settings here are volume, mute, and the selected packs. Keystrokes are not stored.
-final class Session {
+final class Session: @unchecked Sendable {
     let player = SoundPlayer()
     private let lock = NSLock()
     private var settings = AppSettings.standard
