@@ -1,8 +1,17 @@
-# keys
+<p align="center">
+  <img src="docs/keys-logo.png" alt="A purple keycap with a sound wave" width="220">
+</p>
 
-keys is a small macOS menu bar app. It plays a mechanical keyboard sound when you type, and a click when you use the mouse.
+<h1 align="center">keys</h1>
 
-![Menu bar panel](docs/popover.png)
+<p align="center">
+  A little more character for every keystroke.<br>
+  Mechanical keyboard and mouse sounds, right from your macOS menu bar.
+</p>
+
+<p align="center">
+  <img src="docs/popover.png" alt="The keys menu bar panel" width="350">
+</p>
 
 ## Features
 
@@ -25,8 +34,8 @@ xcode-select --install
 Then:
 
 ```
-git clone https://github.com/tobenwarrior/keys.git /Users/lucas/Documents/my_test_projects/keys
-cd /Users/lucas/Documents/my_test_projects/keys
+git clone https://github.com/tobenwarrior/keys.git
+cd keys
 make
 open keys.app
 ```
@@ -49,7 +58,7 @@ Granting the permission to Terminal does not cover `keys.app`. After you run `ma
 If a downloaded copy of `keys.app` is blocked, or macOS says it is damaged, clear the quarantine flag and open it again:
 
 ```
-xattr -dr com.apple.quarantine /Users/lucas/Documents/my_test_projects/keys/keys.app
+xattr -dr com.apple.quarantine keys.app
 ```
 
 You do not need that command for an app you just built with `make`.
