@@ -37,10 +37,10 @@ Then:
 git clone https://github.com/tobenwarrior/keys.git
 cd keys
 make
-open keys.app
+open .build/keys.app
 ```
 
-`make` compiles a release binary, wraps it in `keys.app`, and signs it for local use. A build made on that Mac is not quarantined by Gatekeeper.
+`make` compiles a release binary, wraps it in `.build/keys.app`, and signs it for local use. A build made on that Mac is not quarantined by Gatekeeper. To install it, copy that app to your Applications folder.
 
 `make test` checks pack loading and playback timing. It does not open the menu bar.
 
@@ -58,7 +58,7 @@ Granting the permission to Terminal does not cover `keys.app`. After you run `ma
 If a downloaded copy of `keys.app` is blocked, or macOS says it is damaged, clear the quarantine flag and open it again:
 
 ```
-xattr -dr com.apple.quarantine keys.app
+xattr -dr com.apple.quarantine .build/keys.app
 ```
 
 You do not need that command for an app you just built with `make`.

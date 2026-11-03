@@ -8,6 +8,8 @@
 	<string>keys</string>
 	<key>CFBundleExecutable</key>
 	<string>keys</string>
+	<key>CFBundleIconFile</key>
+	<string>keys</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.lucasyee.keys</string>
 	<key>CFBundleInfoDictionaryVersion</key>
